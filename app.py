@@ -26,14 +26,14 @@ if not st.session_state.logged_in:
         st.write("💰 Predict electricity bill")
         st.write("💡 Save energy efficiently")
 
-        # Better logo
-    st.markdown("""
-<div style="text-align:center;">
-    <img src="https://cdn-icons-png.flaticon.com/512/251/251518.png" width="70">
-    <h2 style="margin-bottom:0;">Electricity Detector</h2>
-    <p style="color:gray; margin-top:0;">Smart Energy Monitoring System</p>
-</div>
-""", unsafe_allow_html=True)    # RIGHT SIDE
+        # Better logo 
+st.markdown("""
+<h1 style="text-align:center; color:#00bcd4;">
+⚡ Electricity Detector
+</h1>
+""", unsafe_allow_html=True)    
+    
+      # RIGHT SIDE
     with col2:
         st.subheader("🔐 Login")
 
