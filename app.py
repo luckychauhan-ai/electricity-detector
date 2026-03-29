@@ -4,115 +4,123 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 import random
 
-# ---------------- PAGE ----------------
+# ------------------ PAGE ------------------
 st.set_page_config(page_title="Electricity Dashboard", layout="wide")
 
-# ---------------- SESSION ----------------
+# ------------------ SESSION ------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ---------------- LOGIN ----------------
+# ------------------ LOGIN SCREEN ------------------
 if not st.session_state.logged_in:
 
-    left, right = st.columns([1.2, 1])
+    col1, col2 = st.columns(2)
 
-    with left:
+    # LEFT SIDE
+    with col1:
         st.title("⚡ Electricity Detector")
-        st.markdown("### Smart Energy Monitoring")
+        st.subheader("Smart Energy Monitoring System")
 
-        st.write("• Track daily electricity usage")
-        st.write("• Detect abnormal spikes")
-        st.write("• Predict monthly bill")
+        st.write("📊 Track daily usage")
+        st.write("🧠 Detect anomalies using AI")
+        st.write("💰 Predict electricity bill")
+        st.write("💡 Save energy efficiently")
 
-        # CLEAN LOGO (simple SVG style)
-        st.image("https://img.icons8.com/fluency/240/lightning-bolt.png", width=120)
+        # Better logo
+        st.image("https://cdn-icons-png.flaticon.com/512/3075/3075977.png", width=180)
 
-    with right:
-        st.markdown("### Login")
+    # RIGHT SIDE
+    with col2:
+        st.subheader("🔐 Login")
 
-        name = st.text_input("Name")
-        meter = st.text_input("Meter ID")
+        name = st.text_input("Enter Name")
+        meter_id = st.text_input("Meter ID")
 
         if st.button("Login"):
-            if name and meter:
+            if name and meter_id:
                 st.session_state.logged_in = True
                 st.session_state.name = name
-                st.session_state.meter = meter
+                st.session_state.meter_id = meter_id
                 st.rerun()
             else:
-                st.warning("Enter all details")
+                st.warning("Please fill all details")
 
     st.stop()
 
-# ---------------- DASHBOARD ----------------
+# ------------------ DASHBOARD ------------------
 name = st.session_state.name
-meter = st.session_state.meter
+meter_id = st.session_state.meter_id
 
-# Logout
-top1, top2 = st.columns([8,1])
-with top2:
-    if st.button("Logout"):
+# Logout button
+colA, colB = st.columns([6,1])
+with colB:
+    if st.button("🚪 Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
-st.title("⚡ Electricity Dashboard")
-st.caption(f"{name} • Meter: {meter}")
+# Header
+st.title("⚡ Electricity Bill Anomaly Detector")
+st.success(f"Welcome {name} 👋")
+st.info(f"Meter ID: {meter_id}")
 
-st.divider()
+st.markdown("---")
 
-COST = 8
+COST_PER_UNIT = 8
 
-# ---------------- SESSION DATA ----------------
-if "units" not in st.session_state:
-    st.session_state.units = []
+# ------------------ SESSION ------------------
+if "meter" not in st.session_state:
+    st.session_state.meter = 0
 
-if "meter_val" not in st.session_state:
-    st.session_state.meter_val = 0
+if "data" not in st.session_state:
+    st.session_state.data = []
 
-# ---------------- INPUT ----------------
-c1, c2, c3 = st.columns(3)
+# ------------------ INPUT ------------------
+col1, col2, col3 = st.columns(3)
 
-with c1:
-    if st.button("Simulate"):
-        st.session_state.meter_val += random.uniform(0.5, 3.0)
-    st.metric("Meter", round(st.session_state.meter_val, 2))
+with col1:
+    if st.button("⚡ Simulate Usage"):
+        st.session_state.meter += random.uniform(0.5, 3.0)
+    st.metric("Meter Reading", round(st.session_state.meter, 2))
 
-with c2:
-    use_meter = st.checkbox("Use meter")
+with col2:
+    use_meter = st.checkbox("Use Virtual Meter")
 
     if use_meter:
-        val = st.session_state.meter_val
+        units = st.session_state.meter
     else:
-        val = st.number_input("Units", 0.0)
+        units = st.number_input("Enter units", min_value=0.0)
 
-    if st.button("Add"):
-        st.session_state.units.append(val)
+    if st.button("➕ Add Data"):
+        st.session_state.data.append(units)
 
-with c3:
-    if st.button("Reset"):
-        st.session_state.units = []
-        st.session_state.meter_val = 0
+with col3:
+    if st.button("🔄 Reset"):
+        st.session_state.data = []
+        st.session_state.meter = 0
 
-st.divider()
+st.markdown("---")
 
-# ---------------- DATA ----------------
-df = pd.DataFrame(st.session_state.units, columns=["Units"])
+# ------------------ DATA ------------------
+df = pd.DataFrame(st.session_state.data, columns=["Units"])
 
 if not df.empty:
 
     df["Day"] = range(1, len(df)+1)
 
     avg = df["Units"].mean()
-    bill = avg * 30 * COST
+    predicted_bill = avg * 30 * COST_PER_UNIT
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Average", round(avg,2))
-    m2.metric("Bill", f"₹ {round(bill,2)}")
-    m3.metric("Days", len(df))
+    # Metrics
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Average Usage", round(avg, 2))
+    c2.metric("Predicted Bill", f"₹ {round(predicted_bill, 2)}")
+    c3.metric("Total Days", len(df))
 
-    st.divider()
+    st.markdown("---")
 
-    # GRAPH
+    # Graph
+    st.subheader("📈 Usage Trend")
+
     fig, ax = plt.subplots()
     ax.plot(df["Day"], df["Units"], marker="o")
 
@@ -124,26 +132,43 @@ if not df.empty:
 
     st.pyplot(fig)
 
-    st.divider()
+    st.markdown("---")
 
-    # TABLE
-    df["Cost"] = df["Units"] * COST
+    # Cost
+    df["Cost"] = df["Units"] * COST_PER_UNIT
+    st.subheader("💸 Cost Table")
     st.dataframe(df)
 
-    # SIMPLE ALERT
-    if avg > 10:
-        st.warning("⚠️ High average usage")
+    # Peak
+    max_day = df.loc[df["Units"].idxmax()]
+    st.success(f"🔥 Highest Usage: Day {int(max_day['Day'])}")
 
-    # AI RESULT
+    # Risky
+    st.subheader("⚠️ Risky Days")
+    risky = df[df["Units"] > avg * 1.5]
+
+    if not risky.empty:
+        st.warning(risky)
+    else:
+        st.info("No risky days")
+
+    # AI
+    st.subheader("🧠 AI Detection")
+
     if len(df) > 5:
         if not anomalies.empty:
-            st.error("Anomalies detected")
+            st.error("Anomalies Detected")
+            st.dataframe(anomalies)
         else:
-            st.success("Normal usage")
+            st.success("No anomalies")
+    else:
+        st.warning("Add at least 6 days")
 
-    # DOWNLOAD
+    st.markdown("---")
+
+    # Download
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button("Download Report", csv, "report.csv")
+    st.download_button("📥 Download Report", csv, "report.csv")
 
 else:
-    st.info("Add data to begin")
+    st.info("Add data to start 🚀")
