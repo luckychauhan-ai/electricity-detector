@@ -7,33 +7,55 @@ import random
 # ------------------ PAGE ------------------
 st.set_page_config(page_title="Electricity Dashboard", layout="wide")
 
+# ------------------ INSTAGRAM STYLE UI ------------------
+st.markdown("""
+<style>
+body {
+    background-color: #fafafa;
+}
+.block-container {
+    padding-top: 2rem;
+}
+.main-title {
+    font-size: 32px;
+    font-weight: 600;
+}
+.subtle {
+    color: #8e8e8e;
+}
+.card {
+    padding: 20px;
+    border-radius: 10px;
+    background-color: white;
+    border: 1px solid #dbdbdb;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ------------------ SESSION ------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ------------------ LOGIN SCREEN ------------------
+# ------------------ LOGIN ------------------
 if not st.session_state.logged_in:
 
     col1, col2 = st.columns(2)
 
-    # LEFT SIDE
     with col1:
-        st.title("⚡ Electricity Detector")
-        st.subheader("Smart Energy Monitoring System")
+        st.markdown('<p class="main-title">⚡ Electricity Detector</p>', unsafe_allow_html=True)
+        st.markdown('<p class="subtle">Smart Energy Monitoring System</p>', unsafe_allow_html=True)
 
-        st.write("📊 Track daily usage")
-        st.write("🧠 Detect anomalies using AI")
-        st.write("💰 Predict electricity bill")
-        st.write("💡 Save energy efficiently")
+        st.write("Track usage 📊")
+        st.write("Detect anomalies 🧠")
+        st.write("Predict bills 💰")
 
-        # Better logo
-        st.image("https://cdn-icons-png.flaticon.com/512/3075/3075977.png", width=180)
+        # REALISTIC LOGO (clean style)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lightning_icon.svg/512px-Lightning_icon.svg.png", width=120)
 
-    # RIGHT SIDE
     with col2:
-        st.subheader("🔐 Login")
+        st.markdown("### Login")
 
-        name = st.text_input("Enter Name")
+        name = st.text_input("Name")
         meter_id = st.text_input("Meter ID")
 
         if st.button("Login"):
@@ -43,7 +65,7 @@ if not st.session_state.logged_in:
                 st.session_state.meter_id = meter_id
                 st.rerun()
             else:
-                st.warning("Please fill all details")
+                st.warning("Enter all details")
 
     st.stop()
 
@@ -51,17 +73,16 @@ if not st.session_state.logged_in:
 name = st.session_state.name
 meter_id = st.session_state.meter_id
 
-# Logout button
-colA, colB = st.columns([6,1])
+# Logout
+colA, colB = st.columns([8,1])
 with colB:
-    if st.button("🚪 Logout"):
+    if st.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
 # Header
-st.title("⚡ Electricity Bill Anomaly Detector")
-st.success(f"Welcome {name} 👋")
-st.info(f"Meter ID: {meter_id}")
+st.markdown('<p class="main-title">⚡ Electricity Dashboard</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="subtle">User: {name} | Meter: {meter_id}</p>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -70,7 +91,6 @@ COST_PER_UNIT = 8
 # ------------------ SESSION ------------------
 if "meter" not in st.session_state:
     st.session_state.meter = 0
-
 if "data" not in st.session_state:
     st.session_state.data = []
 
@@ -78,27 +98,25 @@ if "data" not in st.session_state:
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("⚡ Simulate Usage"):
+    if st.button("Simulate"):
         st.session_state.meter += random.uniform(0.5, 3.0)
-    st.metric("Meter Reading", round(st.session_state.meter, 2))
+    st.metric("Meter", round(st.session_state.meter, 2))
 
 with col2:
-    use_meter = st.checkbox("Use Virtual Meter")
+    use_meter = st.checkbox("Use Meter")
 
     if use_meter:
         units = st.session_state.meter
     else:
-        units = st.number_input("Enter units", min_value=0.0)
+        units = st.number_input("Units", min_value=0.0)
 
-    if st.button("➕ Add Data"):
+    if st.button("Add"):
         st.session_state.data.append(units)
 
 with col3:
-    if st.button("🔄 Reset"):
+    if st.button("Reset"):
         st.session_state.data = []
         st.session_state.meter = 0
-
-st.markdown("---")
 
 # ------------------ DATA ------------------
 df = pd.DataFrame(st.session_state.data, columns=["Units"])
@@ -108,19 +126,17 @@ if not df.empty:
     df["Day"] = range(1, len(df)+1)
 
     avg = df["Units"].mean()
-    predicted_bill = avg * 30 * COST_PER_UNIT
+    bill = avg * 30 * COST_PER_UNIT
 
     # Metrics
     c1, c2, c3 = st.columns(3)
-    c1.metric("Average Usage", round(avg, 2))
-    c2.metric("Predicted Bill", f"₹ {round(predicted_bill, 2)}")
-    c3.metric("Total Days", len(df))
+    c1.metric("Avg", round(avg, 2))
+    c2.metric("Bill", f"₹ {round(bill, 2)}")
+    c3.metric("Days", len(df))
 
     st.markdown("---")
 
     # Graph
-    st.subheader("📈 Usage Trend")
-
     fig, ax = plt.subplots()
     ax.plot(df["Day"], df["Units"], marker="o")
 
@@ -134,41 +150,25 @@ if not df.empty:
 
     st.markdown("---")
 
-    # Cost
+    # Table
     df["Cost"] = df["Units"] * COST_PER_UNIT
-    st.subheader("💸 Cost Table")
     st.dataframe(df)
 
-    # Peak
-    max_day = df.loc[df["Units"].idxmax()]
-    st.success(f"🔥 Highest Usage: Day {int(max_day['Day'])}")
-
     # Risky
-    st.subheader("⚠️ Risky Days")
     risky = df[df["Units"] > avg * 1.5]
-
     if not risky.empty:
-        st.warning(risky)
-    else:
-        st.info("No risky days")
+        st.warning("⚠️ High usage detected")
 
     # AI
-    st.subheader("🧠 AI Detection")
-
     if len(df) > 5:
         if not anomalies.empty:
-            st.error("Anomalies Detected")
-            st.dataframe(anomalies)
+            st.error("Anomalies found")
         else:
-            st.success("No anomalies")
-    else:
-        st.warning("Add at least 6 days")
-
-    st.markdown("---")
+            st.success("Normal usage")
 
     # Download
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download Report", csv, "report.csv")
+    st.download_button("Download", csv, "report.csv")
 
 else:
-    st.info("Add data to start 🚀")
+    st.info("Start adding data 🚀")
