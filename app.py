@@ -4,139 +4,115 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 import random
 
-# ------------------ PAGE ------------------
+# ---------------- PAGE ----------------
 st.set_page_config(page_title="Electricity Dashboard", layout="wide")
 
-# ------------------ INSTAGRAM STYLE UI ------------------
-st.markdown("""
-<style>
-body {
-    background-color: #fafafa;
-}
-.block-container {
-    padding-top: 2rem;
-}
-.main-title {
-    font-size: 32px;
-    font-weight: 600;
-}
-.subtle {
-    color: #8e8e8e;
-}
-.card {
-    padding: 20px;
-    border-radius: 10px;
-    background-color: white;
-    border: 1px solid #dbdbdb;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ------------------ SESSION ------------------
+# ---------------- SESSION ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ------------------ LOGIN ------------------
+# ---------------- LOGIN ----------------
 if not st.session_state.logged_in:
 
-    col1, col2 = st.columns(2)
+    left, right = st.columns([1.2, 1])
 
-    with col1:
-        st.markdown('<p class="main-title">⚡ Electricity Detector</p>', unsafe_allow_html=True)
-        st.markdown('<p class="subtle">Smart Energy Monitoring System</p>', unsafe_allow_html=True)
+    with left:
+        st.title("⚡ Electricity Detector")
+        st.markdown("### Smart Energy Monitoring")
 
-        st.write("Track usage 📊")
-        st.write("Detect anomalies 🧠")
-        st.write("Predict bills 💰")
+        st.write("• Track daily electricity usage")
+        st.write("• Detect abnormal spikes")
+        st.write("• Predict monthly bill")
 
-        # REALISTIC LOGO (clean style)
-        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lightning_icon.svg/512px-Lightning_icon.svg.png", width=120)
+        # CLEAN LOGO (simple SVG style)
+        st.image("https://img.icons8.com/fluency/240/lightning-bolt.png", width=120)
 
-    with col2:
+    with right:
         st.markdown("### Login")
 
         name = st.text_input("Name")
-        meter_id = st.text_input("Meter ID")
+        meter = st.text_input("Meter ID")
 
         if st.button("Login"):
-            if name and meter_id:
+            if name and meter:
                 st.session_state.logged_in = True
                 st.session_state.name = name
-                st.session_state.meter_id = meter_id
+                st.session_state.meter = meter
                 st.rerun()
             else:
                 st.warning("Enter all details")
 
     st.stop()
 
-# ------------------ DASHBOARD ------------------
+# ---------------- DASHBOARD ----------------
 name = st.session_state.name
-meter_id = st.session_state.meter_id
+meter = st.session_state.meter
 
 # Logout
-colA, colB = st.columns([8,1])
-with colB:
+top1, top2 = st.columns([8,1])
+with top2:
     if st.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
-# Header
-st.markdown('<p class="main-title">⚡ Electricity Dashboard</p>', unsafe_allow_html=True)
-st.markdown(f'<p class="subtle">User: {name} | Meter: {meter_id}</p>', unsafe_allow_html=True)
+st.title("⚡ Electricity Dashboard")
+st.caption(f"{name} • Meter: {meter}")
 
-st.markdown("---")
+st.divider()
 
-COST_PER_UNIT = 8
+COST = 8
 
-# ------------------ SESSION ------------------
-if "meter" not in st.session_state:
-    st.session_state.meter = 0
-if "data" not in st.session_state:
-    st.session_state.data = []
+# ---------------- SESSION DATA ----------------
+if "units" not in st.session_state:
+    st.session_state.units = []
 
-# ------------------ INPUT ------------------
-col1, col2, col3 = st.columns(3)
+if "meter_val" not in st.session_state:
+    st.session_state.meter_val = 0
 
-with col1:
+# ---------------- INPUT ----------------
+c1, c2, c3 = st.columns(3)
+
+with c1:
     if st.button("Simulate"):
-        st.session_state.meter += random.uniform(0.5, 3.0)
-    st.metric("Meter", round(st.session_state.meter, 2))
+        st.session_state.meter_val += random.uniform(0.5, 3.0)
+    st.metric("Meter", round(st.session_state.meter_val, 2))
 
-with col2:
-    use_meter = st.checkbox("Use Meter")
+with c2:
+    use_meter = st.checkbox("Use meter")
 
     if use_meter:
-        units = st.session_state.meter
+        val = st.session_state.meter_val
     else:
-        units = st.number_input("Units", min_value=0.0)
+        val = st.number_input("Units", 0.0)
 
     if st.button("Add"):
-        st.session_state.data.append(units)
+        st.session_state.units.append(val)
 
-with col3:
+with c3:
     if st.button("Reset"):
-        st.session_state.data = []
-        st.session_state.meter = 0
+        st.session_state.units = []
+        st.session_state.meter_val = 0
 
-# ------------------ DATA ------------------
-df = pd.DataFrame(st.session_state.data, columns=["Units"])
+st.divider()
+
+# ---------------- DATA ----------------
+df = pd.DataFrame(st.session_state.units, columns=["Units"])
 
 if not df.empty:
 
     df["Day"] = range(1, len(df)+1)
 
     avg = df["Units"].mean()
-    bill = avg * 30 * COST_PER_UNIT
+    bill = avg * 30 * COST
 
-    # Metrics
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Avg", round(avg, 2))
-    c2.metric("Bill", f"₹ {round(bill, 2)}")
-    c3.metric("Days", len(df))
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Average", round(avg,2))
+    m2.metric("Bill", f"₹ {round(bill,2)}")
+    m3.metric("Days", len(df))
 
-    st.markdown("---")
+    st.divider()
 
-    # Graph
+    # GRAPH
     fig, ax = plt.subplots()
     ax.plot(df["Day"], df["Units"], marker="o")
 
@@ -148,27 +124,26 @@ if not df.empty:
 
     st.pyplot(fig)
 
-    st.markdown("---")
+    st.divider()
 
-    # Table
-    df["Cost"] = df["Units"] * COST_PER_UNIT
+    # TABLE
+    df["Cost"] = df["Units"] * COST
     st.dataframe(df)
 
-    # Risky
-    risky = df[df["Units"] > avg * 1.5]
-    if not risky.empty:
-        st.warning("⚠️ High usage detected")
+    # SIMPLE ALERT
+    if avg > 10:
+        st.warning("⚠️ High average usage")
 
-    # AI
+    # AI RESULT
     if len(df) > 5:
         if not anomalies.empty:
-            st.error("Anomalies found")
+            st.error("Anomalies detected")
         else:
             st.success("Normal usage")
 
-    # Download
+    # DOWNLOAD
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button("Download", csv, "report.csv")
+    st.download_button("Download Report", csv, "report.csv")
 
 else:
-    st.info("Start adding data 🚀")
+    st.info("Add data to begin")
