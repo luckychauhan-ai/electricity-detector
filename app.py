@@ -7,29 +7,6 @@ import random
 # ------------------ PAGE ------------------
 st.set_page_config(page_title="Electricity Dashboard", layout="wide")
 
-# ------------------ CUSTOM STYLE ------------------
-st.markdown("""
-<style>
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: white;
-}
-.big-title {
-    font-size: 40px;
-    font-weight: bold;
-}
-.sub-text {
-    font-size: 18px;
-    color: #cbd5f5;
-}
-.card {
-    padding: 20px;
-    border-radius: 15px;
-    background: #1e293b;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # ------------------ SESSION ------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -41,24 +18,25 @@ if not st.session_state.logged_in:
 
     # LEFT SIDE
     with col1:
-        st.markdown('<p class="big-title">⚡ Electricity Detector</p>', unsafe_allow_html=True)
-        st.markdown('<p class="sub-text">Smart Energy Monitoring System</p>', unsafe_allow_html=True)
+        st.title("⚡ Electricity Detector")
+        st.subheader("Smart Energy Monitoring System")
 
         st.write("📊 Track daily usage")
         st.write("🧠 Detect anomalies using AI")
         st.write("💰 Predict electricity bill")
-        st.write("💡 Save energy smartly")
+        st.write("💡 Save energy efficiently")
 
-        st.image("https://cdn-icons-png.flaticon.com/512/1048/1048953.png", width=200)
+        # Better logo
+        st.image("https://cdn-icons-png.flaticon.com/512/3075/3075977.png", width=180)
 
     # RIGHT SIDE
     with col2:
-        st.markdown("## 🔐 Login")
+        st.subheader("🔐 Login")
 
         name = st.text_input("Enter Name")
         meter_id = st.text_input("Meter ID")
 
-        if st.button("🚀 Login"):
+        if st.button("Login"):
             if name and meter_id:
                 st.session_state.logged_in = True
                 st.session_state.name = name
@@ -73,7 +51,7 @@ if not st.session_state.logged_in:
 name = st.session_state.name
 meter_id = st.session_state.meter_id
 
-# Logout
+# Logout button
 colA, colB = st.columns([6,1])
 with colB:
     if st.button("🚪 Logout"):
@@ -81,7 +59,7 @@ with colB:
         st.rerun()
 
 # Header
-st.markdown('<p class="big-title">⚡ Electricity Dashboard</p>', unsafe_allow_html=True)
+st.title("⚡ Electricity Bill Anomaly Detector")
 st.success(f"Welcome {name} 👋")
 st.info(f"Meter ID: {meter_id}")
 
@@ -140,7 +118,7 @@ if not df.empty:
 
     st.markdown("---")
 
-    # GRAPH
+    # Graph
     st.subheader("📈 Usage Trend")
 
     fig, ax = plt.subplots()
@@ -150,23 +128,22 @@ if not df.empty:
         model = IsolationForest(contamination=0.2, random_state=42)
         df["anomaly"] = model.fit_predict(df[["Units"]])
         anomalies = df[df["anomaly"] == -1]
-
         ax.scatter(anomalies["Day"], anomalies["Units"])
 
     st.pyplot(fig)
 
     st.markdown("---")
 
-    # COST
+    # Cost
     df["Cost"] = df["Units"] * COST_PER_UNIT
     st.subheader("💸 Cost Table")
     st.dataframe(df)
 
-    # PEAK
+    # Peak
     max_day = df.loc[df["Units"].idxmax()]
     st.success(f"🔥 Highest Usage: Day {int(max_day['Day'])}")
 
-    # RISKY
+    # Risky
     st.subheader("⚠️ Risky Days")
     risky = df[df["Units"] > avg * 1.5]
 
@@ -189,10 +166,9 @@ if not df.empty:
 
     st.markdown("---")
 
-    # DOWNLOAD
+    # Download
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("📥 Download Report", csv, "report.csv")
 
 else:
     st.info("Add data to start 🚀")
-
