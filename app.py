@@ -27,7 +27,7 @@ if not st.session_state.logged_in:
         st.write("💡 Save energy efficiently")
 
         # Better logo
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lightning_icon.svg/512px-Lightning_icon.svg.png", width=120)  
+    st.image("logo.png",width 140)  
     # RIGHT SIDE
     with col2:
         st.subheader("🔐 Login")
