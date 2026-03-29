@@ -1,24 +1,26 @@
 
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 import random
 
-# ------------------ PAGE ------------------
 st.set_page_config(page_title="Electricity Dashboard", layout="wide")
 
-# ------------------ LOGIN ------------------
-st.sidebar.title("👤 User Info")
-
+# ------------------ SESSION ------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# ------------------ LOGIN SCREEN ------------------
 if not st.session_state.logged_in:
-    name = st.sidebar.text_input("Enter Name")
-    meter_id = st.sidebar.text_input("Meter ID")
 
-    if st.sidebar.button("Start Monitoring"):
+    st.title("🔐 Login")
+
+    name = st.text_input("Enter Name")
+    meter_id = st.text_input("Meter ID")
+
+    if st.button("Login"):
         if name and meter_id:
             st.session_state.logged_in = True
             st.session_state.name = name
@@ -29,12 +31,20 @@ if not st.session_state.logged_in:
 
     st.stop()
 
+# ------------------ DASHBOARD ------------------
 name = st.session_state.name
 meter_id = st.session_state.meter_id
 
-# ------------------ HEADER ------------------
+# Logout button (TOP RIGHT feel)
+col1, col2 = st.columns([6,1])
+with col2:
+    if st.button("🚪 Logout"):
+        st.session_state.logged_in = False
+        st.rerun()
+
+# Header
 st.title("⚡ Electricity Bill Anomaly Detector")
-st.success(f"Welcome {name}")
+st.success(f"Welcome {name} 👋")
 st.info(f"Meter ID: {meter_id}")
 
 st.markdown("---")
@@ -48,7 +58,7 @@ if "meter" not in st.session_state:
 if "data" not in st.session_state:
     st.session_state.data = []
 
-# ------------------ INPUT SECTION ------------------
+# ------------------ INPUT ------------------
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -103,7 +113,6 @@ if not df.empty:
         model = IsolationForest(contamination=0.2, random_state=42)
         df["anomaly"] = model.fit_predict(df[["Units"]])
         anomalies = df[df["anomaly"] == -1]
-
         ax.scatter(anomalies["Day"], anomalies["Units"])
 
     st.pyplot(fig)
@@ -115,11 +124,11 @@ if not df.empty:
     st.subheader("💸 Cost Table")
     st.dataframe(df)
 
-    # Peak usage
+    # Peak
     max_day = df.loc[df["Units"].idxmax()]
     st.success(f"🔥 Highest Usage: Day {int(max_day['Day'])}")
 
-    # Risky days
+    # Risky
     st.subheader("⚠️ Risky Days")
     risky = df[df["Units"] > avg * 1.5]
 
@@ -137,7 +146,6 @@ if not df.empty:
             st.dataframe(anomalies)
         else:
             st.success("No anomalies")
-
     else:
         st.warning("Add at least 6 days of data")
 
