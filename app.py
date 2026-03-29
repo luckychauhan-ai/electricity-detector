@@ -27,7 +27,7 @@ if not st.session_state.logged_in:
         st.write("💡 Save energy efficiently")
 
         # Better logo
-    st.image("https://cdn-icons-png.flaticon.com/512/742/742751.png", width=180)
+    st.image("https://cdn-icons-png.flaticon.com/512/3103/3103446.png", width=180)
     # RIGHT SIDE
     with col2:
         st.subheader("🔐 Login")
