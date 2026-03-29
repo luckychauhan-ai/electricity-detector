@@ -5,26 +5,39 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 import random
 
-# ------------------ PAGE CONFIG ------------------
+# ------------------ PAGE ------------------
 st.set_page_config(page_title="Electricity Dashboard", layout="wide")
 
 # ------------------ LOGIN ------------------
 st.sidebar.title("👤 User Info")
 
-name = st.sidebar.text_input("Enter Name")
-meter_id = st.sidebar.text_input("Meter ID")
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-start = st.sidebar.button("Start Monitoring")
+if not st.session_state.logged_in:
+    name = st.sidebar.text_input("Enter Name")
+    meter_id = st.sidebar.text_input("Meter ID")
 
-if not start:
-    st.warning("Please enter details and click Start Monitoring")
+    if st.sidebar.button("Start Monitoring"):
+        if name and meter_id:
+            st.session_state.logged_in = True
+            st.session_state.name = name
+            st.session_state.meter_id = meter_id
+            st.rerun()
+        else:
+            st.warning("Please fill all details")
+
     st.stop()
+
+name = st.session_state.name
+meter_id = st.session_state.meter_id
 
 # ------------------ HEADER ------------------
 st.title("⚡ Electricity Bill Anomaly Detector")
-
-st.success(f"Welcome {name} 👋")
+st.success(f"Welcome {name}")
 st.info(f"Meter ID: {meter_id}")
+
+st.markdown("---")
 
 COST_PER_UNIT = 8
 
@@ -35,7 +48,7 @@ if "meter" not in st.session_state:
 if "data" not in st.session_state:
     st.session_state.data = []
 
-# ------------------ VIRTUAL METER ------------------
+# ------------------ INPUT SECTION ------------------
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -59,6 +72,8 @@ with col3:
         st.session_state.data = []
         st.session_state.meter = 0
 
+st.markdown("---")
+
 # ------------------ DATA ------------------
 df = pd.DataFrame(st.session_state.data, columns=["Units"])
 
@@ -69,46 +84,42 @@ if not df.empty:
     avg = df["Units"].mean()
     predicted_bill = avg * 30 * COST_PER_UNIT
 
-    # ------------------ METRICS ------------------
+    # Metrics
     c1, c2, c3 = st.columns(3)
     c1.metric("Average Usage", round(avg, 2))
     c2.metric("Predicted Bill", f"₹ {round(predicted_bill, 2)}")
     c3.metric("Total Days", len(df))
 
-    # ------------------ GRAPH ------------------
+    st.markdown("---")
+
+    # Graph
     st.subheader("📈 Usage Trend")
 
     fig, ax = plt.subplots()
     ax.plot(df["Day"], df["Units"], marker="o")
 
-    # Highlight anomalies (after AI)
+    # AI anomaly
     if len(df) > 5:
         model = IsolationForest(contamination=0.2, random_state=42)
         df["anomaly"] = model.fit_predict(df[["Units"]])
-
         anomalies = df[df["anomaly"] == -1]
 
-        ax.scatter(anomalies["Day"], anomalies["Units"])  # red dots default
+        ax.scatter(anomalies["Day"], anomalies["Units"])
 
-    ax.set_xlabel("Day")
-    ax.set_ylabel("Units")
     st.pyplot(fig)
 
-    # ------------------ COST ------------------
+    st.markdown("---")
+
+    # Cost table
     df["Cost"] = df["Units"] * COST_PER_UNIT
     st.subheader("💸 Cost Table")
     st.dataframe(df)
 
-    # ------------------ PEAK ------------------
+    # Peak usage
     max_day = df.loc[df["Units"].idxmax()]
-    st.success(f"🔥 Highest Usage: Day {int(max_day['Day'])} ({round(max_day['Units'],2)} units)")
+    st.success(f"🔥 Highest Usage: Day {int(max_day['Day'])}")
 
-    # ------------------ DAILY CHANGE ------------------
-    if len(df) > 1:
-        change = ((df["Units"].iloc[-1] - df["Units"].iloc[-2]) / df["Units"].iloc[-2]) * 100
-        st.write(f"📊 Change from yesterday: {round(change,2)}%")
-
-    # ------------------ RISKY ------------------
+    # Risky days
     st.subheader("⚠️ Risky Days")
     risky = df[df["Units"] > avg * 1.5]
 
@@ -117,27 +128,24 @@ if not df.empty:
     else:
         st.info("No risky days")
 
-    # ------------------ AI SECTION ------------------
-    st.subheader("🧠 AI Anomaly Detection")
+    # AI section
+    st.subheader("🧠 AI Detection")
 
     if len(df) > 5:
         if not anomalies.empty:
-            st.error("⚠️ Anomalies Detected")
+            st.error("Anomalies Detected")
             st.dataframe(anomalies)
         else:
-            st.success("✅ No anomalies detected")
+            st.success("No anomalies")
 
-        st.info("Isolation Forest algorithm is used for anomaly detection")
     else:
         st.warning("Add at least 6 days of data")
 
-    # ------------------ DOWNLOAD ------------------
+    st.markdown("---")
+
+    # Download
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("📥 Download Report", csv, "report.csv")
-
-    # ------------------ ALERT ------------------
-    if units > avg * 1.5:
-        st.error(f"⚠️ High usage today ({units}) compared to avg ({round(avg,2)})")
 
 else:
     st.info("Add data to start 🚀")
